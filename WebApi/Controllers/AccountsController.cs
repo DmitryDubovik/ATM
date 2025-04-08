@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Models;
 using WebApi.Services;
 
 namespace WebApi.Controllers
@@ -129,6 +130,57 @@ namespace WebApi.Controllers
                 await _accountService.Withdraw(account, amount);
 
                 return Ok("Withdraw successful.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        [HttpPost("{accountId:int}/transfer")]
+        public async Task<IActionResult> Transfer(int accountId, [FromBody] decimal amount)
+        {
+            try
+            {
+                if (amount <= 0)
+                {
+                    return BadRequest("Transfer amount must be greater than zero.");
+                }
+                var sourceAccount = await _accountService.GetAccountById(accountId);
+                if (sourceAccount == null)
+                {
+                    return NotFound("Account not found.");
+                }
+
+                if (amount > sourceAccount.Balance)
+                {
+                    return BadRequest("Transfer amount exceeds the account balance.");
+                }
+
+                var destinationAccount = await _accountService.GetAnotherAccount(accountId);
+                if (destinationAccount == null)
+                {
+                    return NotFound("Account not found.");
+                }
+
+                await _accountService.Transfer(sourceAccount, destinationAccount, amount);
+
+                return Ok("Transfer successful.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        [HttpPost("{accountId:int}/cleartransactions")]
+        public async Task<IActionResult> ClearTransactions(int accountId)
+        {
+            try
+            {
+                await _accountService.ClearTransactions(accountId);
+                await _accountService.ClearTransactions(accountId);
+                return Ok();
             }
             catch (Exception ex)
             {

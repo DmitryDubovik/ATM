@@ -1,13 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using WebApi.Controllers;
 using WebApi.Models;
 using WebApi.Services;
-using Xunit;
 
 namespace WebApi.Tests.Controllers
 {
@@ -236,6 +232,90 @@ namespace WebApi.Tests.Controllers
             // Assert
             Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("Account not found.", ((NotFoundObjectResult)result).Value);
+        }
+
+
+        [Fact]
+        public async Task Transfer_ReturnsOkResult_OnSuccess()
+        {
+            // Arrange
+            var sourceAccount = new Account { Id = 1, AccountNumber = "12345", AccountType = "Checking", Balance = 1000 };
+            _mockAccountService.Setup(s => s.GetAccountById(1)).ReturnsAsync(sourceAccount);
+
+            var destinationAccount = new Account { Id = 2, AccountNumber = "12345", AccountType = "Savings", Balance = 1000 };
+            _mockAccountService.Setup(s => s.GetAnotherAccount(1)).ReturnsAsync(destinationAccount);
+
+            // Act
+            var result = await _controller.Transfer(1, 500);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            _mockAccountService.Verify(s => s.Transfer(sourceAccount, destinationAccount, 500), Times.Once);
+            Assert.Equal("Transfer successful.", ((OkObjectResult)result).Value);
+        }
+
+
+        [Fact]
+        public async Task Transfer_ReturnsBadRequest_WhenAmountIsNegative()
+        {
+            // Act
+            var result = await _controller.Transfer(1, -500);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Transfer amount must be greater than zero.", ((BadRequestObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task Transfer_ReturnsNotFound_WhenDestinationAccountDoesNotExist()
+        {
+            // Arrange
+            var sourceAccount = new Account { Id = 1, AccountNumber = "12345", AccountType = "Checking", Balance = 1000 };
+            _mockAccountService.Setup(s => s.GetAccountById(1)).ReturnsAsync(sourceAccount);
+
+            _mockAccountService.Setup(s => s.GetAnotherAccount(1)).ReturnsAsync((Account)null);
+
+            // Act
+            var result = await _controller.Transfer(1, 500);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("Account not found.", ((NotFoundObjectResult)result).Value);
+            _mockAccountService.Verify(s => s.Transfer(It.IsAny<Account>(), It.IsAny<Account>(), It.IsAny<decimal>()), Times.Never);
+        }
+
+
+        [Fact]
+        public async Task Transfer_ReturnsNotFound_WhenSourceAccountDoesNotExist()
+        {
+            // Arrange
+            _mockAccountService.Setup(s => s.GetAccountById(1)).ReturnsAsync((Account)null);
+
+            // Act
+            var result = await _controller.Transfer(1, 500);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("Account not found.", ((NotFoundObjectResult)result).Value);
+            _mockAccountService.Verify(s => s.Transfer(It.IsAny<Account>(), It.IsAny<Account>(), It.IsAny<decimal>()), Times.Never);
+        }
+
+
+        [Fact]
+        public async Task Transfer_ReturnsBadRequest_WhenAmountExceedsBalance()
+        {
+            // Arrange
+            var sourceAccount = new Account { Id = 1, AccountNumber = "12345", AccountType = "Checking", Balance = 1000 };
+            _mockAccountService.Setup(s => s.GetAccountById(1)).ReturnsAsync(sourceAccount);
+
+
+            // Act
+            var result = await _controller.Transfer(1, 1500);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Transfer amount exceeds the account balance.", ((BadRequestObjectResult)result).Value);
+            _mockAccountService.Verify(s => s.Transfer(It.IsAny<Account>(), It.IsAny<Account>(), It.IsAny<decimal>()), Times.Never);
         }
     }
 }

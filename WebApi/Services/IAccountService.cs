@@ -9,12 +9,16 @@ namespace WebApi.Services
 
         Task<Account> GetAccountById(int accountId);
 
-        Task<List<Transaction>> GetAccountTransactions(int accountId);
+        Task<Account> GetAnotherAccount(int accountId);
 
-        //Task Deposit(int accountId, decimal amount);
+        Task<List<Transaction>> GetAccountTransactions(int accountId);
 
         Task Deposit(Account account, decimal amount);
 
         Task Withdraw(Account account, decimal amount);
+
+        Task Transfer(Account sourceAccount, Account destinationAccount, decimal amount);
+
+        Task ClearTransactions(int accountId);
     }
 }

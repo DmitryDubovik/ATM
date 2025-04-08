@@ -22,6 +22,7 @@ h1, h2 {
 
 .account-section, .transaction-section {
     margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 input[type="number"], select {

@@ -119,6 +119,15 @@ async function loadTransactions() {
 
 
 function formatTranaction(tx) {
+
+    const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      });
+
+      const formattedAmount = formatter.format(tx.amount);
+      const formattedBalance = formatter.format(tx.amount);
+
     const dateString = tx.date;
 
     const date = new Date(dateString);
@@ -132,7 +141,7 @@ function formatTranaction(tx) {
         second: '2-digit',
     });
 
-    return `<li>${formattedDate} ${tx.type} Amount: $${tx.amount} Account Balance: $${tx.accountBalance}</li>`
+    return `<li>${formattedDate} ${tx.type} Amount: ${formattedAmount} Account Balance: ${formattedBalance}</li>`
 }
 
 async function deposit() {
@@ -193,7 +202,8 @@ async function withdraw() {
 }
 
 async function transfer() {
-    const amount = parseFloat(document.getElementById('transferAmount').value);
+    const amount = parseFloat(document.getElementById('amount').value);
+    const accountId = getAccountId();
 
     if (amount <= 0) {
         alert("Please enter a valid amount greater than zero.");
@@ -201,7 +211,7 @@ async function transfer() {
     }
 
     try {
-        const response = await fetch(`${accountsUrl}/transfer`, {
+        const response = await fetch(`${accountsUrl}/${accountId}/transfer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(amount)
@@ -210,13 +220,12 @@ async function transfer() {
         const result = await response.text();
 
         if (response.ok) {
-            alert(result);
             getAccountInfo();  // Refresh account info
         } else {
-            alert(result);
+            alert(`Error: ${result.message}`);
         }
     } catch (error) {
-        alert("Something went wrong: " + error.message);
+        alert(`Error: ${error.message}`);
     }
 }
 

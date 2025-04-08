@@ -27,6 +27,12 @@ namespace WebApi.Services
         }
 
 
+        public async Task<Account> GetAnotherAccount(int accountId)
+        {
+            var account = await _context.Accounts.SingleOrDefaultAsync(a => a.Id != accountId);
+            return account;
+        }
+
         public async Task<List<Transaction>> GetAccountTransactions(int accountId)
         {
             var transactions = await _context.Transactions
@@ -89,6 +95,46 @@ namespace WebApi.Services
 
             account.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task Transfer(Account sourceAccount, Account destinationAccount, decimal amount)
+        {
+            sourceAccount.Balance -= amount;
+            destinationAccount.Balance += amount;
+
+            var sourceTransaction = new Transaction
+            {
+                Type = "Withdraw",
+                Amount = amount,
+                Date = DateTime.Now,
+                AccountBalance = sourceAccount.Balance,
+                AccountId = sourceAccount.Id
+            };
+
+            var destinsalionTransaction = new Transaction
+            {
+                Type = "Deposit",
+                Amount = amount,
+                Date = DateTime.Now,
+                AccountBalance = destinationAccount.Balance,
+                AccountId = destinationAccount.Id
+            };
+
+            sourceAccount.Transactions.Add(sourceTransaction);
+            destinationAccount.Transactions.Add(destinsalionTransaction);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ClearTransactions(int accountId)
+        {
+            var transactions = await GetAccountTransactions(accountId);
+
+            if (transactions != null)
+            {
+                _context.Transactions.RemoveRange(transactions);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
