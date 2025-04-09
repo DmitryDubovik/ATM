@@ -98,6 +98,7 @@ async function loadTransactions() {
     try {
         const response = await fetch(`${accountsUrl}/${accountId}/transactions`);
         const transactions = await response.json();
+        const reversedArray = [...transactions].reverse();
 
         if (response.ok) {
 
@@ -105,11 +106,12 @@ async function loadTransactions() {
             transactionHistoryElement.innerHTML = `
                 <h3>Transaction History:</h3>
                 <ul>
-                    ${transactions.map(tx => formatTranaction(tx)).join('')}
+                    ${reversedArray.map(tx => formatTranaction(tx)).join('')}
                 </ul>
             `;
         } else {
-            alert(`Error: ${account.message}`);
+            const result = await response.text();
+            alert(`Error: ${result}`);
         }
     } catch (error) {
         alert(`Error: ${error.message}`);
@@ -159,16 +161,11 @@ async function deposit() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(amount)
         });
-
-        const result = await response.text();
-
         if (response.ok) {
             getAccountInfo();
-
-
-
         } else {
-            alert(`Error: ${result.message}`);
+            const result = await response.text();
+            alert(`Error: ${result}`);
         }
     } catch (error) {
         alert(`Error: ${error.message}`);
@@ -194,7 +191,8 @@ async function withdraw() {
         if (response.ok) {
             getAccountInfo();  // Refresh account info
         } else {
-            alert(`Error: ${result.message}`);
+            const result = await response.text();
+            alert(`Error: ${result}`);
         }
     } catch (error) {
         alert(`Error: ${error.message}`);
@@ -217,12 +215,11 @@ async function transfer() {
             body: JSON.stringify(amount)
         });
 
-        const result = await response.text();
-
         if (response.ok) {
             getAccountInfo();  // Refresh account info
         } else {
-            alert(`Error: ${result.message}`);
+            const result = await response.text();
+            alert(`Error: ${result}`);
         }
     } catch (error) {
         alert(`Error: ${error.message}`);
