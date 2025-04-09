@@ -126,7 +126,7 @@ function formatTranaction(tx) {
       });
 
       const formattedAmount = formatter.format(tx.amount);
-      const formattedBalance = formatter.format(tx.amount);
+      const formattedBalance = formatter.format(tx.accountBalance);
 
     const dateString = tx.date;
 
